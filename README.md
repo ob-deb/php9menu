@@ -18,7 +18,9 @@ It basically reads all ``*.desktop`` files in ``/usr/share/applications`` and ``
 
 ## Install and Usage
 
-Just save the files somewere in filesystem and run the script ``php9menu``. All generated files will be saved in `~/.config/9menu/`.
+Just save the files somewere in filesystem and run the script ``php9menu``. 
+
+All generated files will be saved in `~/.config/9menu/`.
 
 ## Future (soon)...
 
