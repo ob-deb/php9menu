@@ -1,0 +1,109 @@
+#!/usr/bin/php
+<?php
+
+mb_internal_encoding("UTF-8");
+
+include "php9menu-rc.php";
+
+# *.destop files paths... 
+$usr_path = $_SERVER['HOME']."/.local/share/applications/";
+$sys_path = "/usr/share/applications/";
+
+# Get *.desktop files info in both paths...
+$sys_desktop = get_desktop_info($sys_path);
+$usr_desktop = get_desktop_info($usr_path);
+
+# Merge arrays...
+$desktop = array_merge($sys_desktop, $usr_desktop);
+
+# Remove hidden, terminal and incomplete...
+$d = array_filter($desktop, 'clean_desktop_info');
+$desktop = array_values($d);
+
+# Split array in categories (ugly, but efective)...
+$d = array();
+foreach ($desktop as $a) {
+	foreach ($cats_names as $k => $i) {
+		if (strpos($a['exec'], 'google-chrome') !== false) {
+			$c = 'Chrome';
+			break;
+		} elseif ($a['category'] == '') {
+			$c = 'Other';
+			break;
+		} else {
+			$cs = array_filter(explode(";", $a['category']));
+			foreach ($cs as $cn) {
+				if (in_array($cn, array_keys($cats_names))) {
+					$c = $cn;
+					break;
+				} else {
+					$c = 'Other';
+				}
+			}
+		}
+	}
+	$d[$c][] = array('name' => $a['name'], 'exec' => $a['exec']);
+}
+
+# Menus and categories files.
+# Get wider category name...
+$cw = 0;
+foreach($cats_names as $v) {
+	$nw = mb_strlen($v);
+	if ($nw > $cw) {
+		$cw = $nw;
+	}
+}
+# Category menu top controls...
+$cmd_back      = $menu_main;
+$menu_cats_sep = str_repeat($sep_string, $cw + 4).":$menu_cats\n";
+$cat_line      = "  < ".$back_label.str_repeat(" ", ($cw - mb_strlen($back_label) - 2))."  :".$cmd_back."\n";
+$cat_line     .= $menu_cats_sep;
+# Sub menus...
+foreach ($cats_names as $k => $i) {
+	# Filter empty categories...
+	if (isset($d[$k])) {
+		# Sort category entries...
+		usort($d[$k], function ($a, $b) {
+			return $a['name'] <=> $b['name'];
+		});
+		# Category command...
+		$file_prefix = strtolower($k);
+		$cmd_cat = menu_command($bg_color, $fg_color, $i, $menus_path, $file_prefix);
+		# Get the wider entry of each category...
+		$w = get_wider($d[$k]);
+		# Separator
+		$sep_cat = str_repeat($sep_string, $w + 4).":$cmd_cat\n";
+		# Top controls...
+		$line  = "  < ".$back_label.str_repeat(" ", ($w - mb_strlen($back_label) - 2))."  :$menu_cats\n";
+		$line .= $sep_cat;
+		# Entries...
+		foreach ($d[$k] as $a) {
+			$fill  = str_repeat(" ", $w - mb_strlen($a['name']));
+			$line .= "  ".$a['name'].$fill."  :".$a['exec']."\n";
+		}
+		# Bottom controls...
+		$line .= $sep_cat;
+		$line .= "  ".$close_label.str_repeat(" ", ($w - mb_strlen($close_label)) + 2)."\n";
+		# Write menu file...
+		file_put_contents($menus_path.$file_prefix.'.9menu', utf8_decode($line));
+	}
+	# Category entries for sub menus...
+	if (isset($d[$k])) {
+		$cat_fill  = str_repeat(" ", $cw - mb_strlen($i));
+		$cat_line .= "  ".$i.$cat_fill."  :$cmd_cat\n";
+	}
+}
+# Category menu bottom controls...
+$cat_line .= $menu_cats_sep;
+$cat_line .= " ".$close_label.str_repeat(" ", ($cw - mb_strlen($close_label)))."\n";
+
+# Write category menu file...
+file_put_contents($menus_path.'categories.9menu', utf8_decode($cat_line));
+
+# Write main menu file...
+file_put_contents($menus_path.'main.9menu', utf8_decode($custom_menu));
+
+shell_exec($menu_main." >/dev/null &");
+
+?>
