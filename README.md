@@ -3,6 +3,12 @@
 
 It basically reads all ``*.desktop`` files in ``/usr/share/applications`` and ``~/.local/share/applications`` folders in order to automatically generate categorized menus for 9menu.
 
+![screenshot#1](http://babass.org/php9menu/php9menu-01.png)
+
+![screenshot#2](http://babass.org/php9menu/php9menu-02.png)
+
+![screenshot#3](http://babass.org/php9menu/php9menu-03.png)
+
 ## Disclaimer
 
 * This script is a work in progress, and was created for learning purpose and to meet my needs using i3wm.
